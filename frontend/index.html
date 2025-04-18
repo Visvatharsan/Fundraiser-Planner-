@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fundraiser - Home</title>
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
+  <link rel="stylesheet" href="/assets/images/status-icons.css">
+  <link rel="stylesheet" href="/assets/css/chatbot.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .hero-gradient {
+      background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    }
+    .campaign-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .campaign-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .testimonial-card {
+      transition: all 0.3s ease;
+    }
+    .testimonial-card:hover {
+      transform: scale(1.02);
+    }
+    .count-up {
+      transition: color 0.3s ease;
+    }
+    .count-up:hover {
+      color: #4f46e5;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <div id="nav-container"></div>
+  <div id="flash-container" class="fixed top-4 right-4 z-50"></div>
+  
+  <!-- Hero Section -->
+  <section class="hero-gradient text-white pt-4">
+    <div class="container mx-auto px-4 py-16 md:py-24">
+      <div class="flex flex-col md:flex-row items-center">
+        <div class="md:w-1/2 mb-10 md:mb-0">
+          <h1 class="text-4xl md:text-5xl font-bold mb-4 leading-tight">Make a difference today with your donation</h1>
+          <p class="text-xl md:text-2xl mb-8 text-indigo-100">Support meaningful campaigns and help change lives. Every donation counts.</p>
+          <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="#campaigns" class="btn bg-white text-indigo-700 hover:bg-indigo-50 px-6 py-3 rounded-lg font-medium text-lg inline-block text-center">Browse Campaigns</a>
+            <a href="/register.html" class="btn bg-indigo-700 hover:bg-indigo-800 px-6 py-3 rounded-lg font-medium text-lg inline-block text-center">Start Fundraising</a>
+          </div>
+        </div>
+        <div class="md:w-1/2 flex justify-center">
+          <img src="/assets/images/People helping each other.jpg" alt="People helping each other" class="rounded-lg shadow-2xl max-w-full h-auto object-cover">
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Featured Campaigns Section -->
+  <section id="campaigns" class="py-16">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-3">Featured Campaigns</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">Support these causes and help make a real impact in people's lives.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="campaign-list">
+        <!-- Campaign cards will be rendered here -->
+        <div class="text-center py-10">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p class="mt-3 text-gray-500">Loading campaigns...</p>
+        </div>
+      </div>
+      
+      <div class="text-center mt-12">
+        <a href="#" id="load-more-btn" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300">Load More Campaigns</a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- How It Works Section -->
+  <section class="bg-gray-50 py-16">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-3">How It Works</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">Getting started is easy, whether you want to donate or create your own fundraising campaign.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white p-8 rounded-lg shadow-md text-center">
+          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold mx-auto mb-6">1</div>
+          <h3 class="text-xl font-semibold mb-3">Browse Campaigns</h3>
+          <p class="text-gray-600">Explore the various fundraising campaigns and find causes that resonate with your values.</p>
+        </div>
+        
+        <div class="bg-white p-8 rounded-lg shadow-md text-center">
+          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold mx-auto mb-6">2</div>
+          <h3 class="text-xl font-semibold mb-3">Choose to Support</h3>
+          <p class="text-gray-600">Select a campaign and make a donation of any amount to help reach the fundraising goal.</p>
+        </div>
+        
+        <div class="bg-white p-8 rounded-lg shadow-md text-center">
+          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold mx-auto mb-6">3</div>
+          <h3 class="text-xl font-semibold mb-3">Create Your Campaign</h3>
+          <p class="text-gray-600">Have a cause you care about? Start your own fundraising campaign in just minutes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Testimonials Section -->
+  <section class="py-16">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-3">What Our Users Say</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">Hear from people who have successfully raised funds and made donations.</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="testimonial-card bg-white p-6 rounded-lg shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white">JD</div>
+            </div>
+            <div class="ml-4">
+              <h4 class="text-lg font-semibold">John Doe</h4>
+              <p class="text-gray-500">Campaign Creator</p>
+            </div>
+          </div>
+          <p class="text-gray-600">"I was able to raise funds for my mother's medical treatment in just two weeks. The platform is incredibly easy to use and the support was amazing."</p>
+        </div>
+        
+        <div class="testimonial-card bg-white p-6 rounded-lg shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white">JS</div>
+            </div>
+            <div class="ml-4">
+              <h4 class="text-lg font-semibold">Jane Smith</h4>
+              <p class="text-gray-500">Regular Donor</p>
+            </div>
+          </div>
+          <p class="text-gray-600">"I donate monthly to different campaigns. It feels great to see the impact my contributions make, and the platform makes it easy to track where my money goes."</p>
+        </div>
+        
+        <div class="testimonial-card bg-white p-6 rounded-lg shadow-md">
+          <div class="flex items-center mb-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white">RJ</div>
+            </div>
+            <div class="ml-4">
+              <h4 class="text-lg font-semibold">Robert Johnson</h4>
+              <p class="text-gray-500">Nonprofit Organization</p>
+            </div>
+          </div>
+          <p class="text-gray-600">"Our nonprofit raised over $50,000 for educational programs through this platform. The tools provided made managing donations and communicating with donors seamless."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Call to Action -->
+  <section class="bg-indigo-700 text-white py-16">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-4">Ready to Make a Difference?</h2>
+      <p class="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">Join thousands of people who are changing lives through donations and fundraising campaigns.</p>
+      <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <a href="#campaigns" class="px-8 py-3 bg-white text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition duration-300">Donate Now</a>
+        <a href="/register.html" class="px-8 py-3 bg-indigo-800 text-white font-semibold rounded-lg hover:bg-indigo-900 transition duration-300">Start a Campaign</a>
+      </div>
+    </div>
+  </section>
+  
+  <footer class="bg-indigo-900 text-white py-12">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Fundraiser</h3>
+          <p class="text-indigo-200">Helping people raise funds for meaningful causes since 2023.</p>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="/" class="text-indigo-200 hover:text-white">Home</a></li>
+            <li><a href="/login.html" class="text-indigo-200 hover:text-white">Login</a></li>
+            <li><a href="/register.html" class="text-indigo-200 hover:text-white">Register</a></li>
+            <li><a href="#" class="text-indigo-200 hover:text-white">Browse Campaigns</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Contact</h3>
+          <p class="text-indigo-200">Have questions or need assistance?</p>
+          <p class="text-indigo-200">Email: support@fundraiser.com</p>
+        </div>
+      </div>
+      <div class="border-t border-indigo-800 pt-8 text-center">
+        <p>&copy; 2023 Fundraiser. All rights reserved.</p>
+        <p class="text-sm mt-2 text-indigo-300">Helping people raise funds for meaningful causes.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/ui.js"></script>
+  <script src="/assets/js/chatbot.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavigation();
+      initDarkMode();
+      
+      // Initialize chatbot
+      if (typeof Chatbot !== 'undefined') {
+        window.chatbot = new Chatbot();
+      }
+      
+      // Initialize homepage
+      if (typeof initPage === 'function') {
+        initPage();
+      } else {
+        // Fallback if initPage isn't defined
+        loadHomePage();
+      }
+      
+      // Load more functionality
+      let page = 1;
+      const loadMoreBtn = document.getElementById('load-more-btn');
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          page++;
+          // In a real app, you would implement pagination
+          // For this demo, we'll just hide the button after one click
+          loadMoreBtn.textContent = 'Loading...';
+          loadMoreBtn.disabled = true;
+          
+          // Simulating loading more campaigns
+          setTimeout(() => {
+            loadMoreBtn.style.display = 'none';
+          }, 1000);
+        });
+      }
+      
+      // Override loadHomePage to add our custom functionality
+      window.loadHomePage = async function() {
+        try {
+          console.log("Loading homepage data...");
+          
+          // Get campaigns and statistics in parallel with cache busting
+          const timestamp = Date.now();
+          
+          const campaignsResponse = await API.campaigns.getAll();
+          
+          // Render campaign cards
+          renderCampaignCards(campaignsResponse.campaigns, '#campaign-list');
+          
+        } catch (error) {
+          console.error('Error loading homepage data:', error);
+          showFlash('Failed to load campaigns. Please try again.', 'error');
+        }
+      };
+
+      // Explicitly call loadHomePage
+      loadHomePage();
+    });
+  </script>
+</body>
+</html> 

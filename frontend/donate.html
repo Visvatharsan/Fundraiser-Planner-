@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Make a Donation - Fundraiser</title>
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
+  <link rel="stylesheet" href="/assets/images/status-icons.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <div id="nav-container"></div>
+  <div id="flash-container" class="fixed top-4 right-4 z-50"></div>
+  
+  <main class="container mx-auto px-4 py-8 flex-grow">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="bg-indigo-600 p-6 text-white">
+        <h1 class="text-2xl font-bold" id="donation-title">Make a Donation</h1>
+        <p class="mt-2" id="donation-subtitle">Support this campaign and help make a difference</p>
+      </div>
+      
+      <div class="p-6">
+        <div class="mb-6">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-xl font-semibold" id="campaign-title">Campaign Name</h2>
+            <span class="badge bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm" id="campaign-progress">0% funded</span>
+          </div>
+          
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+          </div>
+          
+          <div class="flex justify-between mt-2 text-sm text-gray-600">
+            <span id="amount-raised">$0 raised</span>
+            <span id="goal-amount">of $10,000 goal</span>
+          </div>
+        </div>
+        
+        <form id="donation-form" class="space-y-4">
+          <input type="hidden" id="campaign_id" name="campaign_id">
+          
+          <div>
+            <label for="donor_name" class="block text-sm font-medium text-gray-700 mb-1">Your Name *</label>
+            <input type="text" id="donor_name" name="donor_name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+          </div>
+          
+          <div>
+            <label for="donor_email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input type="email" id="donor_email" name="donor_email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <p class="text-xs text-gray-500 mt-1">Optional, but recommended to receive a receipt</p>
+          </div>
+          
+          <div>
+            <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Donation Amount *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+              <input type="number" id="amount" name="amount" class="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" min="1" step="0.01" required>
+            </div>
+            
+            <div class="flex space-x-2 mt-2">
+              <button type="button" class="amount-btn px-3 py-1 border border-indigo-300 rounded-md text-indigo-600 hover:bg-indigo-50" data-amount="10">$10</button>
+              <button type="button" class="amount-btn px-3 py-1 border border-indigo-300 rounded-md text-indigo-600 hover:bg-indigo-50" data-amount="25">$25</button>
+              <button type="button" class="amount-btn px-3 py-1 border border-indigo-300 rounded-md text-indigo-600 hover:bg-indigo-50" data-amount="50">$50</button>
+              <button type="button" class="amount-btn px-3 py-1 border border-indigo-300 rounded-md text-indigo-600 hover:bg-indigo-50" data-amount="100">$100</button>
+              <button type="button" class="amount-btn px-3 py-1 border border-indigo-300 rounded-md text-indigo-600 hover:bg-indigo-50" data-amount="500">$500</button>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="border border-gray-300 rounded-md p-3 hover:border-indigo-500 cursor-pointer payment-method active" data-method="creditcard">
+                <div class="flex items-center">
+                  <input type="radio" name="payment_method" value="creditcard" checked class="h-4 w-4 text-indigo-600">
+                  <label class="ml-2 text-sm text-gray-700">Credit Card</label>
+                </div>
+              </div>
+              <div class="border border-gray-300 rounded-md p-3 hover:border-indigo-500 cursor-pointer payment-method" data-method="paypal">
+                <div class="flex items-center">
+                  <input type="radio" name="payment_method" value="paypal" class="h-4 w-4 text-indigo-600">
+                  <label class="ml-2 text-sm text-gray-700">PayPal</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="credit-card-details" class="space-y-3">
+            <div>
+              <label for="card_number" class="block text-sm font-medium text-gray-700 mb-1">Card Number *</label>
+              <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
+                <input type="text" id="expiry_date" name="expiry_date" placeholder="MM/YY" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label for="cvv" class="block text-sm font-medium text-gray-700 mb-1">CVV *</label>
+                <input type="text" id="cvv" name="cvv" placeholder="123" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+          </div>
+          
+          <div id="paypal-details" class="hidden">
+            <p class="text-gray-600">You will be redirected to PayPal to complete your donation.</p>
+          </div>
+          
+          <div class="pt-4">
+            <button type="submit" class="w-full py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              Complete Donation
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <p class="text-sm text-gray-600">All transactions are secure and encrypted. By completing this donation, you agree to our terms of service.</p>
+      </div>
+    </div>
+  </main>
+  
+  <footer class="bg-indigo-800 text-white py-6 mt-8">
+    <div class="container mx-auto px-4 text-center">
+      <p>&copy; 2023 Fundraiser. All rights reserved.</p>
+      <p class="text-sm mt-2 text-indigo-200">Helping people raise funds for meaningful causes.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/ui.js"></script>
+  <script src="/assets/js/chatbot-injector.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavigation();
+      initDarkMode();
+      
+      // Get campaign ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaignId = urlParams.get('id');
+      
+      if (!campaignId) {
+        window.location.href = '/'; // Redirect to homepage if no campaign ID
+        return;
+      }
+      
+      document.getElementById('campaign_id').value = campaignId;
+      
+      // Load campaign details
+      loadCampaignDetailsForDonation(campaignId);
+      
+      // Amount button handlers
+      document.querySelectorAll('.amount-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const amount = btn.getAttribute('data-amount');
+          document.getElementById('amount').value = amount;
+        });
+      });
+      
+      // Payment method toggle
+      document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', () => {
+          // Update radio button
+          const radio = method.querySelector('input[type="radio"]');
+          radio.checked = true;
+          
+          // Update active class
+          document.querySelectorAll('.payment-method').forEach(m => {
+            m.classList.remove('active');
+            m.classList.remove('border-indigo-500');
+            m.classList.add('border-gray-300');
+          });
+          method.classList.add('active');
+          method.classList.add('border-indigo-500');
+          method.classList.remove('border-gray-300');
+          
+          // Show/hide payment details
+          const paymentMethod = method.getAttribute('data-method');
+          if (paymentMethod === 'creditcard') {
+            document.getElementById('credit-card-details').classList.remove('hidden');
+            document.getElementById('paypal-details').classList.add('hidden');
+          } else {
+            document.getElementById('credit-card-details').classList.add('hidden');
+            document.getElementById('paypal-details').classList.remove('hidden');
+          }
+        });
+      });
+      
+      // Form submission
+      document.getElementById('donation-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Processing...';
+        
+        try {
+          // In a real application, you would process the payment here
+          // For this demo, we're just submitting the donation
+          
+          const donationData = {
+            campaign_id: form.campaign_id.value,
+            donor_name: form.donor_name.value,
+            amount: parseFloat(form.amount.value)
+          };
+          
+          await API.donations.create(donationData);
+          
+          // Show a success message
+          showFlash('Thank you for your donation!', 'success');
+          
+          // Redirect to campaign page after a short delay
+          setTimeout(() => {
+            window.location.href = `/campaign.html?id=${campaignId}`;
+          }, 2000);
+        } catch (error) {
+          showFlash(error.message || 'Error processing donation', 'error');
+          submitButton.disabled = false;
+          submitButton.textContent = 'Complete Donation';
+        }
+      });
+    });
+    
+    // Function to load campaign details for donation
+    async function loadCampaignDetailsForDonation(campaignId) {
+      try {
+        const campaign = await API.campaigns.getById(campaignId);
+        
+        document.getElementById('donation-title').textContent = `Donate to ${campaign.title}`;
+        document.getElementById('donation-subtitle').textContent = `Support this campaign and help make a difference`;
+        document.getElementById('campaign-title').textContent = campaign.title;
+        
+        const progress = calculateProgress(campaign.raised_amount || 0, campaign.goal_amount);
+        const isCompleted = parseFloat(progress) >= 100;
+        
+        // Update progress indicators
+        document.getElementById('campaign-progress').textContent = `${progress}% funded`;
+        document.getElementById('campaign-progress').className = isCompleted 
+          ? 'badge bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm'
+          : 'badge bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm';
+        
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('progress-bar').className = isCompleted
+          ? 'bg-green-500 h-2.5 rounded-full'
+          : 'bg-indigo-600 h-2.5 rounded-full';
+        
+        document.getElementById('amount-raised').textContent = `${formatCurrency(campaign.raised_amount || 0)} raised`;
+        document.getElementById('goal-amount').textContent = `of ${formatCurrency(campaign.goal_amount)} goal`;
+        
+        // If campaign is completed, disable the donation form
+        if (isCompleted) {
+          const formContainer = document.querySelector('.max-w-2xl.mx-auto');
+          
+          // Create a completion message
+          const completionMessage = document.createElement('div');
+          completionMessage.className = 'bg-green-50 p-6 rounded-lg mt-6 text-center border border-green-200';
+          completionMessage.innerHTML = `
+            <h3 class="text-xl font-semibold mb-3 text-green-700">Funding Goal Reached!</h3>
+            <p class="text-gray-700 mb-4">Thank you to all our donors for helping achieve this campaign's goal!</p>
+            <div class="flex justify-center space-x-4">
+              <a href="/campaign.html?id=${campaignId}" class="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300">
+                View Campaign
+              </a>
+              <a href="/" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300">
+                Browse More Campaigns
+              </a>
+            </div>
+          `;
+          
+          // Replace the form with the completion message
+          const donationForm = document.getElementById('donation-form');
+          donationForm.parentNode.replaceChild(completionMessage, donationForm);
+          
+          // Add confetti effect
+          const confettiContainer = document.createElement('div');
+          confettiContainer.className = 'confetti-container';
+          confettiContainer.style.position = 'absolute';
+          confettiContainer.style.top = '0';
+          confettiContainer.style.left = '0';
+          confettiContainer.style.width = '100%';
+          confettiContainer.style.height = '0';
+          confettiContainer.style.overflow = 'visible';
+          confettiContainer.style.zIndex = '10';
+          
+          // Add 30 confetti pieces
+          for (let i = 0; i < 30; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = `${Math.random() * 100}%`;
+            confetti.style.animationDelay = `${Math.random() * 3}s`;
+            confettiContainer.appendChild(confetti);
+          }
+          
+          formContainer.insertBefore(confettiContainer, formContainer.firstChild);
+        }
+      } catch (error) {
+        showFlash('Error loading campaign details. Please try again.', 'error');
+      }
+    }
+  </script>
+</body>
+</html> 

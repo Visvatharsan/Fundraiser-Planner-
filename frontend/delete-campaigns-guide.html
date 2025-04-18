@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Campaigns Guide - Fundraiser</title>
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <div id="nav-container"></div>
+  
+  <main class="container mx-auto px-4 py-8 flex-grow">
+    <div class="max-w-3xl mx-auto">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-indigo-700 mb-2">Delete Campaigns Guide</h1>
+        <p class="text-gray-600">Follow these steps to delete the "Clean Water Initiative" and "Education for Children" campaigns</p>
+      </header>
+      
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Step 1: Log In</h2>
+        <p class="mb-4">First, you need to log in to your account:</p>
+        <ol class="list-decimal ml-6 mb-6 space-y-2">
+          <li>Go to the <a href="/login.html" class="text-indigo-600 hover:underline">Login page</a></li>
+          <li>Enter your email and password</li>
+          <li>Click "Login"</li>
+        </ol>
+        
+        <div class="border-t border-gray-200 my-6"></div>
+        
+        <h2 class="text-xl font-semibold mb-4">Step 2: Go to Dashboard</h2>
+        <p class="mb-4">Once logged in, you'll be redirected to your dashboard. If not, click on "Dashboard" in the navigation menu.</p>
+        
+        <div class="border-t border-gray-200 my-6"></div>
+        
+        <h2 class="text-xl font-semibold mb-4">Step 3: Delete Using Browser Console</h2>
+        <p class="mb-4">To delete the specific campaigns:</p>
+        <ol class="list-decimal ml-6 mb-6 space-y-2">
+          <li>Open your browser's developer console:
+            <ul class="list-disc ml-6 mt-2">
+              <li>Chrome/Edge: Press F12 or right-click and select "Inspect" then click on "Console" tab</li>
+              <li>Firefox: Press F12 or right-click and select "Inspect Element" then click on "Console" tab</li>
+              <li>Safari: First enable developer tools in Safari preferences, then right-click and select "Inspect Element"</li>
+            </ul>
+          </li>
+          <li>Copy the entire script below:</li>
+        </ol>
+        
+        <div class="bg-gray-800 text-gray-100 p-4 rounded-md overflow-x-auto mb-6">
+          <pre><code>// Function to delete campaigns by title
+async function deleteCampaignsByTitle(targetTitles) {
+  try {
+    // Fetch all user campaigns
+    const campaigns = await API.users.getCampaigns();
+    console.log('Found', campaigns.length, 'campaigns');
+    
+    // Filter the campaigns to delete
+    const campaignsToDelete = campaigns.filter(campaign => 
+      targetTitles.includes(campaign.title)
+    );
+    
+    if (campaignsToDelete.length === 0) {
+      console.log('No matching campaigns found to delete');
+      return 0;
+    }
+    
+    console.log('Found', campaignsToDelete.length, 'campaigns to delete:');
+    campaignsToDelete.forEach(c => console.log(`- ${c.title} (ID: ${c.id})`));
+    
+    // Delete each campaign
+    for (const campaign of campaignsToDelete) {
+      try {
+        console.log(`Deleting campaign: ${campaign.title} (ID: ${campaign.id})...`);
+        await API.campaigns.delete(campaign.id);
+        console.log(`Successfully deleted campaign: ${campaign.title}`);
+      } catch (error) {
+        console.error(`Error deleting campaign ${campaign.title}:`, error);
+      }
+    }
+    
+    // Refresh the dashboard
+    console.log('Refreshing dashboard...');
+    await loadUserCampaigns();
+    console.log('Dashboard refreshed');
+    
+    return campaignsToDelete.length;
+  } catch (error) {
+    console.error('Error fetching campaigns:', error);
+    return 0;
+  }
+}
+
+// Campaigns to delete
+const targetCampaigns = [
+  'Clean Water Initiative',
+  'Education for Children'
+];
+
+// Run the deletion process
+deleteCampaignsByTitle(targetCampaigns)
+  .then(count => {
+    if (count > 0) {
+      console.log(`Cleanup complete! Deleted ${count} campaigns.`);
+      showFlash(`Successfully deleted ${count} campaigns`, 'success');
+    } else {
+      console.log('No campaigns were deleted');
+    }
+  })
+  .catch(error => {
+    console.error('Cleanup failed:', error);
+    showFlash('Error during campaign cleanup', 'error');
+  });</code></pre>
+        </div>
+        
+        <ol class="list-decimal ml-6 mb-6 space-y-2" start="3">
+          <li>Paste the script into the console and press Enter</li>
+          <li>The script will find and delete the specified campaigns</li>
+          <li>You'll see confirmation messages in the console</li>
+          <li>The dashboard will refresh automatically to show your updated campaigns list</li>
+        </ol>
+        
+        <div class="border-t border-gray-200 my-6"></div>
+        
+        <h2 class="text-xl font-semibold mb-4">Alternative Method: Manual Deletion</h2>
+        <p class="mb-4">If you prefer, you can also delete campaigns manually:</p>
+        <ol class="list-decimal ml-6 mb-6 space-y-2">
+          <li>Look for the campaigns in your dashboard</li>
+          <li>For each campaign you want to delete, click the "Delete" button (red button)</li>
+          <li>Confirm the deletion when prompted</li>
+        </ol>
+        
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 my-6">
+          <p class="text-yellow-700"><strong>Note:</strong> Deleting a campaign will also delete all associated donations. This action cannot be undone.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <footer class="bg-indigo-800 text-white py-6 mt-8">
+    <div class="container mx-auto px-4 text-center">
+      <p>&copy; 2023 Fundraiser. All rights reserved.</p>
+      <p class="text-sm mt-2 text-indigo-200">Helping people raise funds for meaningful causes.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/ui.js"></script>
+  <script src="/assets/js/chatbot-injector.js"></script>
+  <script>
+    // ... existing code ...
+  </script>
+</body>
+</html> 

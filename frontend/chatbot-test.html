@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Test</title>
+    <link rel="stylesheet" href="/assets/css/tailwind.css">
+    <link rel="stylesheet" href="/assets/css/chatbot.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9eff5 100%);
+        }
+        .content {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #4F46E5;
+        }
+        p {
+            margin-bottom: 1.5rem;
+            color: #374151;
+            line-height: 1.6;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.35);
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Chatbot Test Page</h1>
+        <p>Click the chatbot icon in the bottom right corner to open the chatbot. The chatbot should slide in from the right side and take up 25% of the screen width. You can send messages and see the chat history.</p>
+        <p>Try closing and reopening the chatbot - your chat history should be preserved between sessions.</p>
+        <button id="manual-open" class="test-button">Open Chatbot</button>
+    </div>
+
+    <script src="/assets/js/chatbot.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize chatbot
+            window.chatbot = new Chatbot();
+            
+            // Add manual button to open chatbot
+            document.getElementById('manual-open').addEventListener('click', function() {
+                if (window.chatbot && !window.chatbot.isOpen) {
+                    window.chatbot.toggleChat();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

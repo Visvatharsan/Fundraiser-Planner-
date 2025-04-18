@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot Test</title>
+    <link rel="stylesheet" href="/assets/css/tailwind.css">
+    <link rel="stylesheet" href="/assets/css/chatbot.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9eff5 100%);
+        }
+        .content {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #4F46E5;
+        }
+        p {
+            margin-bottom: 1.5rem;
+            color: #374151;
+            line-height: 1.6;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
+            margin: 0 10px;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.35);
+        }
+        .debug-panel {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            font-family: monospace;
+            text-align: left;
+            height: 200px;
+            overflow-y: auto;
+        }
+        #debug-log {
+            white-space: pre-wrap;
+            margin: 0;
+            color: #333;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>AI Chatbot Test Page</h1>
+        <p>This is a test page for the AI-powered chatbot. You should receive AI-generated responses rather than pre-written answers when you ask questions.</p>
+        
+        <div class="controls">
+            <button id="manual-open" class="test-button">Open Chatbot</button>
+            <button id="clear-logs" class="test-button">Clear Debug Logs</button>
+        </div>
+        
+        <div class="debug-panel">
+            <pre id="debug-log">Debug logs will appear here...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Override console.log to display in debug panel
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        const debugLog = document.getElementById('debug-log');
+        
+        console.log = function() {
+            const args = Array.from(arguments);
+            originalLog.apply(console, args);
+            debugLog.textContent += `\n[LOG] ${args.join(' ')}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+        };
+        
+        console.warn = function() {
+            const args = Array.from(arguments);
+            originalWarn.apply(console, args);
+            debugLog.textContent += `\n[WARN] ${args.join(' ')}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+        };
+        
+        console.error = function() {
+            const args = Array.from(arguments);
+            originalError.apply(console, args);
+            debugLog.textContent += `\n[ERROR] ${args.join(' ')}`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+        };
+        
+        // Clear logs button
+        document.getElementById('clear-logs').addEventListener('click', function() {
+            debugLog.textContent = 'Debug logs will appear here...';
+        });
+    </script>
+
+    <script src="/assets/js/chatbot.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing AI Chatbot for testing...');
+            
+            // Initialize chatbot
+            window.chatbot = new Chatbot();
+            
+            // Log when initialized
+            console.log('Chatbot initialized with API key format validation');
+            
+            // Add manual button to open chatbot
+            document.getElementById('manual-open').addEventListener('click', function() {
+                if (window.chatbot && !window.chatbot.isOpen) {
+                    window.chatbot.toggleChat();
+                    console.log('Chatbot opened manually');
+                }
+            });
+            
+            // Add test message suggestions (optional)
+            console.log('Try asking these questions to test AI responses:');
+            console.log('1. "How do I create a campaign?"');
+            console.log('2. "What payment methods are accepted for donations?"');
+            console.log('3. "Can you help me write a good campaign description?"');
+        });
+    </script>
+</body>
+</html> 

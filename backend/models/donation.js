@@ -24,11 +24,12 @@ const Donation = {
     
     const result = stmt.run(campaign_id, donor_name, amount);
     
-    return {
-      id: result.lastInsertRowid,
-      ...donation,
-      donated_at: new Date().toISOString()
-    };
+    // Get the newly created donation with the database timestamp
+    const newDonation = db.prepare(`
+      SELECT * FROM donations WHERE id = ?
+    `).get(result.lastInsertRowid);
+    
+    return newDonation;
   },
   
   // Get campaign donation summary

@@ -1,0 +1,78 @@
+/* Dashboard Chatbot Fixes */
+
+/* Ensure proper layout on dashboard */
+.dashboard-page #chatbot-window,
+.dashboard-page .chatbot-window {
+    position: fixed !important;
+    top: 64px !important;
+    right: 0 !important;
+    width: 25% !important;
+    height: calc(100vh - 64px) !important;
+    z-index: 10000 !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.4s ease !important;
+}
+
+.dashboard-page #chatbot-window.open,
+.dashboard-page .chatbot-window.open {
+    transform: translateX(0) !important;
+    left: auto !important;
+    right: 0 !important;
+}
+
+/* Main content adjustments */
+.dashboard-page.chatbot-open main,
+.dashboard-page.chatbot-open .main-content,
+.dashboard-page.chatbot-open .container {
+    width: 75% !important;
+    float: left !important;
+    transition: width 0.4s ease !important;
+    min-height: 100vh !important;
+}
+
+/* Footer adjustments */
+.dashboard-page.chatbot-open footer {
+    width: 75% !important;
+    float: left !important;
+    clear: both !important;
+    position: relative !important;
+}
+
+/* Campaign cards adjustment */
+.dashboard-page.chatbot-open #user-campaigns {
+    max-width: 100% !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .dashboard-page #chatbot-window,
+    .dashboard-page .chatbot-window {
+        width: 75% !important;
+    }
+    
+    .dashboard-page #chatbot-window.open,
+    .dashboard-page .chatbot-window.open {
+        left: 25% !important;
+        width: 75% !important;
+    }
+    
+    .dashboard-page.chatbot-open main,
+    .dashboard-page.chatbot-open .main-content,
+    .dashboard-page.chatbot-open .container {
+        width: 100% !important;
+    }
+    
+    .dashboard-page.chatbot-open footer {
+        width: 100% !important;
+    }
+}
+
+/* Fix for z-index stacking */
+#flash-container {
+    z-index: 10005 !important;
+    top: 20px !important;
+}
+
+.chatbot-toggle {
+    z-index: 10001 !important;
+} 

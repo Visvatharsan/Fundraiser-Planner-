@@ -8,6 +8,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
   <div id="nav-container"></div>
+  <div id="flash-container" class="fixed top-4 right-4 z-50"></div>
   
   <main class="container mx-auto px-4 py-8 flex-grow">
     <div class="max-w-2xl mx-auto">
@@ -65,7 +66,27 @@
   <script src="/assets/js/ui.js"></script>
   <script src="/assets/js/chatbot-injector.js"></script>
   <script>
-    // ... existing code ...
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavigation();
+      initDarkMode();
+      
+      // Check authentication before accessing edit page
+      if (!isAuthenticated()) {
+        showFlash('Please log in to edit campaigns', 'error');
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 1000);
+        return;
+      }
+      
+      // Setup the edit campaign form
+      setupEditCampaignForm().catch(error => {
+        console.error('Error:', error);
+        
+        // Handle token expiration
+        API.handleTokenError(error);
+      });
+    });
   </script>
 </body>
 </html> 

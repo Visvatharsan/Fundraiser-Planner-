@@ -256,7 +256,10 @@
           
         } catch (error) {
           console.error('Error loading homepage data:', error);
-          showFlash('Failed to load campaigns. Please try again.', 'error');
+          // Handle token expiration if needed
+          if (!API.handleTokenError(error)) {
+            showFlash('Failed to load campaigns. Please try again.', 'error');
+          }
         }
       };
 

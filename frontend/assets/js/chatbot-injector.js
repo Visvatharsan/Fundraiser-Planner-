@@ -24,6 +24,9 @@ function injectChatbot() {
     if (typeof Chatbot !== 'undefined') {
         window.chatbot = new Chatbot();
         console.log('Chatbot initialized directly');
+        
+        // Set up navigation listeners for context awareness
+        setupNavigationListeners();
     } else {
         // Add chatbot script
         const chatbotScript = document.createElement('script');
@@ -33,11 +36,68 @@ function injectChatbot() {
             if (typeof Chatbot !== 'undefined') {
                 window.chatbot = new Chatbot();
                 console.log('Chatbot initialized after script load');
+                
+                // Set up navigation listeners for context awareness
+                setupNavigationListeners();
             } else {
                 console.error('Chatbot class not found');
             }
         };
         document.body.appendChild(chatbotScript);
+    }
+}
+
+// Function to set up navigation event listeners for SPA context refresh
+function setupNavigationListeners() {
+    // Store current URL to detect changes
+    let lastUrl = window.location.href;
+    
+    // Listen for navigation events in SPAs
+    
+    // Option 1: Use History API events
+    window.addEventListener('popstate', function() {
+        console.log('Navigation detected (popstate)');
+        refreshChatbotContext();
+    });
+    
+    // Option 2: Monitor URL changes periodically
+    // This helps with programmatic navigation in SPAs
+    setInterval(function() {
+        if (lastUrl !== window.location.href) {
+            console.log('Navigation detected (URL change)');
+            lastUrl = window.location.href;
+            refreshChatbotContext();
+        }
+    }, 500);
+    
+    // Option 3: Listen for click events on anchor elements
+    // This covers direct link navigation
+    document.addEventListener('click', function(event) {
+        // Check if clicked element is a link
+        let target = event.target;
+        while (target && target.tagName !== 'A') {
+            target = target.parentNode;
+            if (!target || target === document) {
+                return;
+            }
+        }
+        
+        // Check if link is to same origin (internal navigation)
+        if (target.href && 
+            target.href.indexOf(window.location.origin) === 0 && 
+            !target.getAttribute('download') && 
+            target.getAttribute('target') !== '_blank') {
+            
+            // For SPA navigation that might not trigger popstate
+            setTimeout(refreshChatbotContext, 200);
+        }
+    });
+}
+
+// Function to refresh chatbot context when navigation occurs
+function refreshChatbotContext() {
+    if (window.chatbot && typeof window.chatbot.refreshPageContext === 'function') {
+        window.chatbot.refreshPageContext();
     }
 }
 

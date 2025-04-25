@@ -14,8 +14,19 @@ class Chatbot {
         this.chatHistory = this.loadChatHistory() || [];
         this.isOpen = false;
         this.lastMessageWasCampaignTypeQuestion = false; // Track if we asked user for campaign type
+        this.userData = null; // Store user data for personalization
+        this.currentPageContext = this.detectCurrentPageContext(); // Store current page context
+        
+        // Store campaign data for recommendations
+        this.campaignStats = null;
+        this.popularCampaigns = [];
+        
         this.initializeUI();
         this.addResizeListener();
+        this.loadUserData(); // Load user data if available
+        
+        // Load initial statistics when chatbot is initialized
+        this.loadChatbotStatistics();
     }
 
     initializeUI() {
@@ -90,6 +101,13 @@ class Chatbot {
     }
 
     toggleChat() {
+        // Refresh page context when chat is opened
+        if (!this.isOpen) {
+            this.refreshPageContext();
+            this.loadUserData(); // Refresh user data when chat is opened
+            this.loadChatbotStatistics(); // Refresh campaign statistics when chat is opened
+        }
+        
         this.isOpen = !this.isOpen;
         const chatWindow = document.getElementById('chatbot-window');
         const body = document.body;
@@ -160,8 +178,163 @@ class Chatbot {
             const campaignTypes = ['medical', 'education', 'community', 'creative', 'nonprofit', 'emergency', 'personal'];
             let response = '';
             
+            // Check for email drafting requests
+            if ((lowerMessage.includes('draft') || lowerMessage.includes('write') || lowerMessage.includes('create')) && 
+                (lowerMessage.includes('email') || lowerMessage.includes('mail') || lowerMessage.includes('message'))) {
+                
+                console.log('Email drafting request detected');
+                
+                // Determine the type of email to draft
+                let emailPurpose = 'share'; // Default to sharing campaign
+                
+                if (lowerMessage.includes('thank') || lowerMessage.includes('appreciation') || lowerMessage.includes('donor')) {
+                    emailPurpose = 'thanks';
+                    console.log('Drafting thank you email for donors');
+                } 
+                else if (lowerMessage.includes('update') || lowerMessage.includes('progress')) {
+                    emailPurpose = 'update';
+                    console.log('Drafting campaign update email');
+                }
+                else if (lowerMessage.includes('sponsor') || lowerMessage.includes('sponsorship')) {
+                    if (lowerMessage.includes('company') || lowerMessage.includes('corporate') || lowerMessage.includes('business')) {
+                        emailPurpose = 'corporate_sponsorship';
+                        console.log('Drafting corporate sponsorship email');
+                    } 
+                    else if (lowerMessage.includes('follow') || lowerMessage.includes('follow-up') || lowerMessage.includes('followup')) {
+                        emailPurpose = 'sponsorship_followup';
+                        console.log('Drafting sponsorship follow-up email');
+                    }
+                    else {
+                        emailPurpose = 'individual_sponsorship';
+                        console.log('Drafting individual sponsorship email');
+                    }
+                }
+                else if (lowerMessage.includes('medical') || lowerMessage.includes('health') || lowerMessage.includes('treatment')) {
+                    emailPurpose = 'medical_share';
+                    console.log('Drafting medical fundraiser email');
+                }
+                else if (lowerMessage.includes('education') || lowerMessage.includes('school') || lowerMessage.includes('student')) {
+                    emailPurpose = 'education_share';
+                    console.log('Drafting education fundraiser email');
+                }
+                else if (lowerMessage.includes('emergency') || lowerMessage.includes('urgent') || lowerMessage.includes('disaster')) {
+                    emailPurpose = 'emergency_share';
+                    console.log('Drafting emergency relief email');
+                }
+                else {
+                    console.log('Drafting general campaign sharing email');
+                }
+                
+                // Check if the user provided campaign details in their message
+                let campaignDetails = null;
+                let extractedTitle = null;
+                let extractedGoal = null;
+                
+                // Try to extract campaign title if provided in the format "for campaign X" or "for X campaign"
+                const titleRegex = /for\s+(?:campaign\s+)?["']?([^"']+)["']?(?:\s+campaign)?/i;
+                const titleMatch = message.match(titleRegex);
+                if (titleMatch && titleMatch[1]) {
+                    extractedTitle = titleMatch[1].trim();
+                    console.log('Extracted campaign title:', extractedTitle);
+                }
+                
+                // Try to extract goal amount if provided
+                const goalRegex = /(?:goal|amount|raise)\s+(?:of\s+)?[$£€]?(\d+(?:,\d+)*(?:\.\d+)?)/i;
+                const goalMatch = message.match(goalRegex);
+                if (goalMatch && goalMatch[1]) {
+                    // Convert to number, removing commas
+                    extractedGoal = parseFloat(goalMatch[1].replace(/,/g, ''));
+                    console.log('Extracted goal amount:', extractedGoal);
+                }
+                
+                // If we have any extracted info, create a campaign details object
+                if (extractedTitle || extractedGoal) {
+                    campaignDetails = {
+                        title: extractedTitle || "[Your Campaign Name]",
+                        description: "[Your Campaign Description]",
+                        goal: extractedGoal || "[Your Campaign Goal]",
+                        url: "[Campaign URL]"
+                    };
+                }
+                
+                // If the user is on a campaign page, try to get that campaign's details
+                if (this.currentPageContext && this.currentPageContext.pageName === 'Campaign' && this.currentPageContext.campaignData) {
+                    console.log('Using current campaign page data for email');
+                    campaignDetails = {
+                        title: this.currentPageContext.campaignData.title,
+                        description: this.currentPageContext.campaignData.description,
+                        goal: this.currentPageContext.campaignData.goal_amount,
+                        url: window.location.href
+                    };
+                }
+                
+                // Use AI to draft a custom email body instead of predefined templates
+                try {
+                    // Format campaign details for the prompt
+                    const campaignInfo = campaignDetails ? 
+                        `Campaign Title: ${campaignDetails.title}\nGoal Amount: ${campaignDetails.goal}\nDescription: ${campaignDetails.description}\nURL: ${campaignDetails.url}\n` :
+                        "No specific campaign details were provided.";
+                    
+                    // Create a prompt for drafting the email
+                    const emailPrompt = `I need you to write a custom email body (not a template) for a ${emailPurpose.replace('_', ' ')} message for a fundraising campaign with these details:\n\n${campaignInfo}\n\nPlease write ONLY the body of the email, without the subject line, greeting (Dear...), or signature. Make it personal, compelling, and authentic - not a template. The email should be about ${emailPurpose === 'thanks' ? 'thanking donors' : emailPurpose === 'update' ? 'updating supporters on campaign progress' : emailPurpose === 'corporate_sponsorship' ? 'requesting corporate sponsorship' : emailPurpose === 'individual_sponsorship' ? 'requesting individual sponsorship' : emailPurpose === 'sponsorship_followup' ? 'following up on sponsorship request' : 'sharing the campaign with friends and family'}. Create completely fresh text, not a fill-in-the-blank template.`;
+                    
+                    // Get custom AI response for the email body
+                    const draftEmail = await this.getGeminiResponse(emailPrompt);
+                    
+                    // Create a response with the email and instructions
+                    response = `Here's a custom email body for your ${emailPurpose.replace('_', ' ')} message:\n\n\`\`\`\n${draftEmail}\n\`\`\`\n\nYou can copy this text and use it as the body of your email. Remember to add your own subject line, greeting, and signature.`;
+                } catch (error) {
+                    console.error('Error getting AI response for email drafting:', error);
+                    // Fall back to template if AI fails
+                    const draftEmail = this.createDraftEmail(emailPurpose, campaignDetails);
+                    response = `Here's a draft email body for your ${emailPurpose.replace('_', ' ')} message:\n\n\`\`\`\n${draftEmail}\n\`\`\`\n\nYou can copy this text and use it as the body of your email. Remember to add your own subject line, greeting, and signature. Replace any placeholder text in [brackets] with your actual information.`;
+                }
+            }
+            // Check for requests for platform statistics
+            else if (lowerMessage.includes('statistics') || 
+                lowerMessage.includes('platform stats') || 
+                lowerMessage.includes('how many campaigns') || 
+                lowerMessage.includes('how much has been raised')) {
+                
+                console.log('Fetching platform statistics...');
+                // Refresh statistics to ensure they're current
+                await this.loadChatbotStatistics();
+                response = this.formatStatistics();
+            }
+            // Check for popular campaign requests
+            else if (lowerMessage.includes('popular campaign') || 
+                lowerMessage.includes('trending campaign') ||
+                lowerMessage.includes('show me popular') ||
+                (lowerMessage.includes('show') && lowerMessage.includes('campaign'))) {
+                
+                console.log('Fetching popular campaigns...');
+                await this.getPopularCampaigns();
+                if (this.popularCampaigns && this.popularCampaigns.length > 0) {
+                    console.log(`Found ${this.popularCampaigns.length} popular campaigns to display`);
+                    response = this.formatCampaignResults(this.popularCampaigns, 'popular');
+                }
+            }
+            // Check for campaign recommendation requests
+            else if ((lowerMessage.includes('recommend') || lowerMessage.includes('suggest') || lowerMessage.includes('find')) && 
+                (lowerMessage.includes('campaign') || lowerMessage.includes('fundraiser'))) {
+                
+                // Extract potential interests from the message
+                let potentialInterests = lowerMessage
+                    .replace(/recommend|suggest|find|campaign|fundraiser|campaigns|fundraisers|related to|about|for/g, '')
+                    .trim();
+                
+                console.log('Searching campaigns with interests:', potentialInterests);
+                if (potentialInterests) {
+                    // Search campaigns based on extracted interests
+                    const recommendedCampaigns = await this.searchCampaigns(potentialInterests);
+                    if (recommendedCampaigns && recommendedCampaigns.length > 0) {
+                        console.log(`Found ${recommendedCampaigns.length} recommended campaigns`);
+                        response = this.formatCampaignResults(recommendedCampaigns, 'recommended');
+                    }
+                }
+            }
             // Only keep the campaign type followup logic as it's contextual
-            if (this.lastMessageWasCampaignTypeQuestion) {
+            else if (this.lastMessageWasCampaignTypeQuestion) {
                 // Look for campaign type in user response
                 let detectedType = null;
                 for (const type of campaignTypes) {
@@ -227,7 +400,22 @@ class Chatbot {
             // Improved system message with clear domain constraints and form filling capabilities
             let systemPrompt = `You are a helpful assistant for a fundraising website. Your purpose is to help users navigate the website, answer their questions about the website's features, fundraising campaigns, donations, and using the platform. 
 
-IMPORTANT: You're specifically designed to help users fill out forms on the website. Provide step-by-step guidance for completing forms, explaining each field and its purpose.
+IMPORTANT: You're specifically designed to help users with the following:
+
+1. Fill out forms on the website - providing step-by-step guidance for completing forms, explaining each field and its purpose.
+2. Provide real-time statistics about the fundraising platform, including donation totals, campaign counts, and popular categories.
+3. Recommend specific campaigns based on user interests or show popular campaigns.
+4. Draft emails for campaign creators - including thank you emails, campaign updates, sponsorship requests, and campaign sharing.
+5. Answer questions about campaign creation, donation processes, and platform features.
+
+When users ask for campaign recommendations, I will search the database and provide actual campaign data. When users ask about statistics, I will provide real-time platform data. When users ask for help writing emails, I can generate templates for different purposes.
+
+For email drafting, I can help with:
+- Thank you emails to donors
+- Campaign updates for supporters
+- Sponsorship requests (corporate or individual)
+- Campaign sharing emails (general or specific to medical, education, or emergency campaigns)
+- Sponsorship follow-up messages
 
 When users need help with forms, guide them through:
 1. Creating a campaign form (title, description, goal amount, category)
@@ -255,11 +443,64 @@ The website has the following main features and pages:
 - Create Campaign page: Form to create a new fundraising campaign (title, description, goal amount, category)
 - Donate page: Form to make a donation to a campaign (amount, payment info, optional message)
 - Dashboard: Manage your created campaigns (edit, delete, view stats)
-- Login/Register pages: User authentication for campaign creators
+- Login/Register pages: User authentication for campaign creators`;
 
-When users ask how to do something on the website, give them step-by-step instructions using the existing interface.
+            // Add user personalization if user data is available
+            if (this.userData) {
+                systemPrompt += `\n\nPERSONALIZATION CONTEXT:
+- User name: ${this.userData.name || 'Anonymous'}
+- User email: ${this.userData.email || 'Not available'}
+- User has ${this.userData.campaigns?.length || 0} active campaigns
+- User has made ${this.userData.donations?.length || 0} donations
+- User account created: ${this.userData.createdAt || 'Recently'}
+- User preferences: ${this.userData.preferences || 'Not specified'}
 
-MOST IMPORTANT: Your responses must be based on AI processing, not pre-written text. Analyze each user message individually and respond appropriately based on the context. Do not use canned responses.`;
+Use this information to provide personalized responses. For example:
+- Refer to the user by name when appropriate
+- Reference their existing campaigns when discussing campaign creation
+- Acknowledge their donation history when discussing donations
+- Tailor suggestions based on their previous activity`;
+            }
+
+            // Add current page context to system prompt
+            if (this.currentPageContext) {
+                systemPrompt += `\n\nPAGE CONTEXT:
+The user is currently on the ${this.currentPageContext.pageName} page.
+${this.currentPageContext.contextDescription}`;
+
+                // If there's active form context, add specific form guidance
+                if (this.currentPageContext.formContext) {
+                    const formContext = this.currentPageContext.formContext;
+                    systemPrompt += `\n\nACTIVE FORM CONTEXT:
+The user is currently working with a ${formContext.formType} form containing the following fields: ${formContext.activeFields.join(', ')}.
+Prioritize giving specific, field-by-field guidance for this form if the user asks for help.`;
+                    
+                    // Add form-specific tips based on type
+                    switch (formContext.formType) {
+                        case 'campaign':
+                            systemPrompt += `\n\nCAMPAIGN FORM TIPS:
+- Campaign title: Should be clear, concise, and compelling (30-60 characters ideal)
+- Description: Tell a story with clear need, impact, and use of funds (500+ words recommended)
+- Goal amount: Set realistic but ambitious goals based on actual needs
+- Categories: Choose most relevant to help discovery`;
+                            break;
+                        case 'donation':
+                            systemPrompt += `\n\nDONATION FORM TIPS:
+- Donation amount: Suggest appropriate amounts based on campaign type
+- Payment methods: Explain available options (credit card, PayPal, etc.)
+- Donor name display: Explain privacy options for how name will appear
+- Gift options: Clarify if donation can be made on behalf of someone else`;
+                            break;
+                        case 'registration':
+                            systemPrompt += `\n\nREGISTRATION FORM TIPS:
+- Username: Should be unique and appropriate
+- Password: Recommend strong password practices
+- Email verification: Explain the process
+- Profile setup: Suggest completing profile for better fundraising results`;
+                            break;
+                    }
+                }
+            }
 
             // Add context-specific instructions if we have detected a conversation context
             if (conversationContext) {
@@ -278,6 +519,12 @@ MOST IMPORTANT: Your responses must be based on AI processing, not pre-written t
                         break;
                     case 'email_drafting':
                         systemPrompt += `\n\nIMPORTANT: The user is currently discussing EMAIL TEMPLATES or DRAFTING. Keep your responses focused on this topic, and maintain continuity from previous messages. Help them create effective emails for their fundraising needs.`;
+                        break;
+                    case 'account_settings':
+                        systemPrompt += `\n\nIMPORTANT: The user is currently discussing ACCOUNT SETTINGS. Keep your responses focused on this topic, and maintain continuity from previous messages. Help them manage their account preferences, profile information, and security settings.`;
+                        break;
+                    case 'technical_support':
+                        systemPrompt += `\n\nIMPORTANT: The user is currently discussing TECHNICAL ISSUES. Keep your responses focused on troubleshooting, and maintain continuity from previous messages. Provide clear steps to resolve common platform issues.`;
                         break;
                 }
             }
@@ -313,19 +560,106 @@ MOST IMPORTANT: Your responses must be based on AI processing, not pre-written t
             }
             
             try {
+                // Construct API request
+                const requestBody = {
+                    contents,
+                    generationConfig: {
+                        temperature: 0.4,
+                        topK: 40,
+                        topP: 0.8,
+                        maxOutputTokens: 2048,
+                    },
+                    safetySettings: [
+                        {
+                            category: "HARM_CATEGORY_HARASSMENT",
+                            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        {
+                            category: "HARM_CATEGORY_HATE_SPEECH",
+                            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        {
+                            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        {
+                            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                        }
+                    ]
+                };
+                
+                // Make the API request
                 console.log(`Using API key: ${this.apiKey.substring(0, 8)}...`); // Log partial key for debugging
                 const response = await fetch(`${url}?key=${this.apiKey}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        contents: contents,
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API Error Response:', errorData);
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received response from Gemini API');
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    // Extract the AI response text
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    return aiResponse;
+                } else {
+                    console.error('Unexpected response format:', data);
+                    throw new Error('Unexpected response format from Gemini API');
+                }
+            } catch (apiError) {
+                console.error('Primary API error:', apiError);
+                
+                // Try fallback to Gemini 1.0 Pro if 2.0 fails
+                try {
+                    console.log('Falling back to Gemini 1.0 Pro API...');
+                    const fallbackUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+                    
+                    // Simplify content format for fallback API
+                    let fallbackContents = [{
+                        parts: [{
+                            text: `System Instructions: ${systemPrompt}`
+                        }]
+                    }];
+                    
+                    // Add conversation history and current message
+                    if (recentMessages.length > 0) {
+                        fallbackContents.push({
+                            parts: [{
+                                text: `Conversation history: ${this.formatChatHistoryForPrompt()}`
+                            }]
+                        });
+                    }
+                    
+                    // Add the current message
+                    fallbackContents.push({
+                        parts: [{
+                            text: `User's current message: ${message}`
+                        }]
+                    });
+                    
+                    const fallbackRequestBody = {
+                        contents: fallbackContents,
                         generationConfig: {
-                            temperature: 0.2,
-                            maxOutputTokens: 800
+                            temperature: 0.4,
+                            topK: 40,
+                            topP: 0.8,
+                            maxOutputTokens: 2048
                         },
                         safetySettings: [
+                            {
+                                category: "HARM_CATEGORY_HARASSMENT",
+                                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                            },
                             {
                                 category: "HARM_CATEGORY_HATE_SPEECH",
                                 threshold: "BLOCK_MEDIUM_AND_ABOVE"
@@ -335,130 +669,18 @@ MOST IMPORTANT: Your responses must be based on AI processing, not pre-written t
                                 threshold: "BLOCK_MEDIUM_AND_ABOVE"
                             },
                             {
-                                category: "HARM_CATEGORY_HARASSMENT",
-                                threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                            },
-                            {
                                 category: "HARM_CATEGORY_DANGEROUS_CONTENT",
                                 threshold: "BLOCK_MEDIUM_AND_ABOVE"
                             }
                         ]
-                    })
-                });
-                
-                console.log('Response status:', response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Received response from Gemini 2.0 Flash API');
+                    };
                     
-                    // Check if we have proper response structure
-                    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-                        console.log('Successfully parsed AI response');
-                        return data.candidates[0].content.parts[0].text;
-                    }
-                    
-                    // Log response data for debugging
-                    console.warn('Received unexpected response format:', JSON.stringify(data).substring(0, 200) + '...');
-                } else {
-                    const errorData = await response.json();
-                    console.error('API Error Response:', errorData);
-                    if (errorData.error && errorData.error.message) {
-                        console.error('API Error Message:', errorData.error.message);
-                    }
-                }
-                
-                // If we reach here, there was an issue - fall back to gemini-pro
-                throw new Error(`Failed to get valid response from gemini-1.5-flash. Status: ${response.status}`);
-            } catch (flashError) {
-                console.warn('Error with gemini-1.5-flash, falling back to gemini-pro:', flashError);
-                
-                // Fallback to gemini-pro model
-                url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
-                console.log('Falling back to Gemini Pro API...');
-                
-                // Enhanced fallback prompt with domain constraints and conversation context
-                let fallbackPrompt = `You are a helpful assistant for a fundraising website. Your ONLY purpose is to help users navigate the website and answer their questions about the website's features, fundraising campaigns, donations, and using the platform. 
-
-IMPORTANT CONSTRAINTS:
-1. You must ONLY answer questions directly related to the fundraising website, its features, and how to use it.
-2. If asked about ANYTHING outside of fundraising, donations, campaigns, or website features, politely decline to answer and explain you can only help with website-related questions.
-3. Do NOT provide information on topics unrelated to the website, even if you know the answer.
-4. Keep your answers concise, friendly, and focused on the website functionality.
-5. When declining to answer off-topic questions, suggest website-related topics you can help with instead.
-
-MOST IMPORTANT: Your responses must be based on AI processing, not pre-written text. Analyze each user message individually and respond appropriately based on the context. Do not use canned responses.
-
-The website has the following main features and pages:
-- Home page: Lists featured campaigns and general information
-- Campaign page: Shows details about a specific campaign (title, description, goal amount, progress, donations)
-- Create Campaign page: Form to create a new fundraising campaign (title, description, goal amount, category)
-- Donate page: Form to make a donation to a campaign (amount, payment info, optional message)
-- Dashboard: Manage your created campaigns (edit, delete, view stats)
-- Login/Register pages: User authentication for campaign creators`;
-
-                // Add context-specific instructions for fallback prompt too
-                if (conversationContext) {
-                    switch(conversationContext) {
-                        case 'campaign_creation':
-                            fallbackPrompt += `\n\nIMPORTANT: This conversation is about CAMPAIGN CREATION. Maintain continuity with previous messages and help the user create an effective campaign with specific guidance.`;
-                            break;
-                        case 'donation':
-                            fallbackPrompt += `\n\nIMPORTANT: This conversation is about DONATIONS. Maintain continuity with previous messages and focus on helping the user understand donation processes.`;
-                            break;
-                        case 'sponsorship':
-                            fallbackPrompt += `\n\nIMPORTANT: This conversation is about SPONSORSHIPS. Maintain continuity with previous messages and provide information about sponsorship opportunities.`;
-                            break;
-                        case 'campaign_management':
-                            fallbackPrompt += `\n\nIMPORTANT: This conversation is about CAMPAIGN MANAGEMENT. Maintain continuity with previous messages and help the user manage their campaigns.`;
-                            break;
-                        case 'email_drafting':
-                            fallbackPrompt += `\n\nIMPORTANT: This conversation is about EMAIL TEMPLATES or DRAFTING. Maintain continuity with previous messages and help create effective fundraising emails.`;
-                            break;
-                    }
-                }
-                
-                fallbackPrompt += `\n\nRecent conversation:
-${this.formatChatHistoryForPrompt()}
-
-User: ${message}
-Assistant:`;
-
-                try {
-                    const fallbackResponse = await fetch(`${url}?key=${this.apiKey}`, {
+                    const fallbackResponse = await fetch(`${fallbackUrl}?key=${this.apiKey}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [{
-                                    text: fallbackPrompt
-                                }]
-                            }],
-                            generationConfig: {
-                                temperature: 0.2,
-                                maxOutputTokens: 800
-                            },
-                            safetySettings: [
-                                {
-                                    category: "HARM_CATEGORY_HATE_SPEECH",
-                                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                                },
-                                {
-                                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                                },
-                                {
-                                    category: "HARM_CATEGORY_HARASSMENT",
-                                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                                },
-                                {
-                                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                                }
-                            ]
-                        })
+                        body: JSON.stringify(fallbackRequestBody)
                     });
                     
                     if (!fallbackResponse.ok) {
@@ -483,11 +705,9 @@ Assistant:`;
                     return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again in a moment, or contact support if the problem persists.";
                 }
             }
-            
         } catch (error) {
             console.error('Error in getGeminiResponse:', error);
-            // Return a friendly error message
-            return "I apologize, but I'm experiencing technical difficulties. This could be due to API rate limits or connectivity issues. Please try again in a few moments.";
+            return "Sorry, I encountered an error while processing your request. Please try again later.";
         }
     }
 
@@ -606,13 +826,15 @@ Assistant:`;
             .map(msg => msg.text.toLowerCase())
             .join(' ');
             
-        // Detect ongoing conversation topics
+        // Detect ongoing conversation topics - Enhanced with more contexts
         const contextMap = {
-            campaign_creation: ['create campaign', 'start campaign', 'campaign form', 'new campaign'],
-            donation: ['donate', 'donation', 'give money', 'support campaign'],
-            sponsorship: ['sponsor', 'sponsorship', 'corporate', 'partner'],
-            campaign_management: ['dashboard', 'edit campaign', 'delete campaign', 'manage campaign'],
-            email_drafting: ['draft email', 'write email', 'create email', 'message template']
+            campaign_creation: ['create campaign', 'start campaign', 'campaign form', 'new campaign', 'setup campaign', 'campaign idea', 'fundraiser idea'],
+            donation: ['donate', 'donation', 'give money', 'support campaign', 'contribute', 'payment method', 'credit card', 'donor'],
+            sponsorship: ['sponsor', 'sponsorship', 'corporate', 'partner', 'business support', 'company sponsor'],
+            campaign_management: ['dashboard', 'edit campaign', 'delete campaign', 'manage campaign', 'statistics', 'analytics', 'progress', 'update campaign'],
+            email_drafting: ['draft email', 'write email', 'create email', 'message template', 'thank you message', 'donor message'],
+            account_settings: ['account', 'profile', 'settings', 'password', 'email address', 'notification', 'preferences'],
+            technical_support: ['error', 'problem', 'not working', 'bug', 'issue', 'help me with', 'trouble with']
         };
         
         // Find which context has the most matches
@@ -1324,14 +1546,10 @@ Would you like me to help with a specific part of your campaign form?`;
         // Try to determine campaign type for more targeted templates
         const campaignType = this.determineCampaignType(campaign.title, campaign.description);
         
-        // Email templates for different purposes
+        // Email body templates for different purposes
         const templates = {
             // Template for sharing campaign with friends and family
-            share: `Subject: Support My Fundraising Campaign: ${campaign.title}
-
-Dear [Friend/Family Member],
-
-I hope this email finds you well. I'm reaching out because I've recently launched a fundraising campaign that's very important to me.
+            share: `I hope this email finds you well. I'm reaching out because I've recently launched a fundraising campaign that's very important to me.
 
 Campaign: ${campaign.title}
 Goal: ${formatCurrencyLocal(campaign.goal)}
@@ -1342,17 +1560,10 @@ Your support would mean the world to me. Even a small donation can make a big di
 
 You can view and support the campaign here: ${campaign.url}
 
-Thank you for considering!
-
-Best regards,
-[Your Name]`,
+Thank you for considering!`,
 
             // Sponsorship request template - Corporate
-            corporate_sponsorship: `Subject: Sponsorship Opportunity for ${campaign.title}
-
-Dear [Company Representative],
-
-I hope this email finds you well. I'm writing to invite [Company Name] to consider sponsoring our fundraising campaign, "${campaign.title}."
+            corporate_sponsorship: `I hope this email finds you well. I'm writing to invite [Company Name] to consider sponsoring our fundraising campaign, "${campaign.title}."
 
 About Our Campaign:
 ${campaign.description.substring(0, 200)}...
@@ -1376,19 +1587,10 @@ I would welcome the opportunity to discuss this partnership in more detail. Coul
 
 You can view our campaign here: ${campaign.url}
 
-Thank you for considering this opportunity. I look forward to your response.
-
-Best regards,
-[Your Name]
-[Your Phone]
-[Your Email]`,
+Thank you for considering this opportunity. I look forward to your response.`,
 
             // Sponsorship request template - Individual
-            individual_sponsorship: `Subject: Request for Sponsorship: ${campaign.title}
-
-Dear [Potential Sponsor's Name],
-
-I hope this message finds you well. My name is [Your Name], and I'm reaching out regarding a sponsorship opportunity for our campaign, "${campaign.title}."
+            individual_sponsorship: `I hope this message finds you well. My name is [Your Name], and I'm reaching out regarding a sponsorship opportunity for our campaign, "${campaign.title}."
 
 About the Campaign:
 ${campaign.description.substring(0, 150)}...
@@ -1410,18 +1612,10 @@ In Recognition of Your Support:
 
 You can learn more about our campaign here: ${campaign.url}
 
-I would be happy to discuss this opportunity further or answer any questions you might have. Thank you for considering supporting our cause.
-
-With appreciation,
-[Your Name]
-[Your Contact Information]`,
+I would be happy to discuss this opportunity further or answer any questions you might have. Thank you for considering supporting our cause.`,
 
             // Sponsorship follow-up template
-            sponsorship_followup: `Subject: Following Up on Sponsorship for ${campaign.title}
-
-Dear [Name],
-
-I hope this message finds you well. I'm writing to follow up on my previous email regarding sponsorship opportunities for our fundraising campaign, "${campaign.title}."
+            sponsorship_followup: `I hope this message finds you well. I'm writing to follow up on my previous email regarding sponsorship opportunities for our fundraising campaign, "${campaign.title}."
 
 Since my last email, we've made significant progress:
 - [Update on campaign progress, e.g., "Reached 40% of our goal"]
@@ -1436,18 +1630,10 @@ Please let me know if you have any questions or if you'd like to schedule a brie
 
 You can view our campaign here: ${campaign.url}
 
-Thank you again for considering this opportunity. I look forward to your response.
-
-Best regards,
-[Your Name]
-[Your Contact Information]`,
+Thank you again for considering this opportunity. I look forward to your response.`,
 
             // Medical campaign sharing template
-            medical_share: `Subject: Help Support [Patient Name]'s Medical Treatment
-
-Dear [Friend/Family Member],
-
-I hope this message finds you well. I'm reaching out about an important fundraising campaign I've started to help with medical expenses.
+            medical_share: `I hope this message finds you well. I'm reaching out about an important fundraising campaign I've started to help with medical expenses.
 
 I've created a fundraiser called "${campaign.title}" with a goal of ${formatCurrencyLocal(campaign.goal)} to help cover costs for [specific medical treatment/condition].
 
@@ -1460,17 +1646,10 @@ Any support you can offer - whether through a donation or simply sharing the cam
 
 You can view the campaign and contribute here: ${campaign.url}
 
-Thank you for your kindness and support during this challenging time.
-
-With gratitude,
-[Your Name]`,
+Thank you for your kindness and support during this challenging time.`,
 
             // Education campaign sharing template
-            education_share: `Subject: Help Support Education Through "${campaign.title}"
-
-Dear [Friend/Family Member],
-
-I hope you're doing well! I wanted to share an education fundraising campaign I've recently launched called "${campaign.title}".
+            education_share: `I hope you're doing well! I wanted to share an education fundraising campaign I've recently launched called "${campaign.title}".
 
 This initiative aims to raise ${formatCurrencyLocal(campaign.goal)} to support:
 - [Specific educational program/need]
@@ -1483,17 +1662,10 @@ Learn more and support this cause here: ${campaign.url}
 
 If you could also share this campaign with others who might be interested, it would help us reach our goal faster.
 
-Thank you for helping invest in education!
-
-Warm regards,
-[Your Name]`,
+Thank you for helping invest in education!`,
 
             // Emergency relief campaign sharing template
-            emergency_share: `Subject: Urgent - Help Needed for ${campaign.title}
-
-Dear [Friend/Family Member],
-
-I hope this email finds you well. I'm reaching out about an urgent situation that requires immediate support.
+            emergency_share: `I hope this email finds you well. I'm reaching out about an urgent situation that requires immediate support.
 
 I've started a fundraising campaign "${campaign.title}" to help with an emergency situation:
 [Brief description of the emergency/disaster/situation]
@@ -1507,33 +1679,19 @@ The situation is time-sensitive, and any help you can provide would make a real 
 
 You can contribute here: ${campaign.url}
 
-Thank you for your compassion and support during this difficult time.
-
-Sincerely,
-[Your Name]`,
+Thank you for your compassion and support during this difficult time.`,
 
             // Template for thanking donors
-            thanks: `Subject: Thank You for Supporting ${campaign.title}
-
-Dear [Donor's Name],
-
-I wanted to personally thank you for your generous donation to my fundraising campaign, ${campaign.title}.
+            thanks: `I wanted to personally thank you for your generous donation to my fundraising campaign, ${campaign.title}.
 
 Your contribution of [Donation Amount] is making a real difference in helping me reach my goal of ${formatCurrencyLocal(campaign.goal)}. With your support, we're now [X]% closer to making this project a reality.
 
 [Include a brief update on the campaign or how funds will be used]
 
-I'm truly grateful for your kindness and support. I'll be sure to keep you updated on our progress.
-
-With sincere thanks,
-[Your Name]`,
+I'm truly grateful for your kindness and support. I'll be sure to keep you updated on our progress.`,
 
             // Template for campaign update to supporters
-            update: `Subject: Update on ${campaign.title} - Progress and Next Steps
-
-Dear Supporters,
-
-I wanted to provide you with an update on our fundraising campaign, ${campaign.title}.
+            update: `I wanted to provide you with an update on our fundraising campaign, ${campaign.title}.
 
 Current Progress:
 - Amount raised: [Current Amount]
@@ -1548,17 +1706,10 @@ Next Steps:
 
 Thank you for your continued support. Every donation, share, and word of encouragement makes a difference.
 
-If you'd like to check on our progress or share the campaign again, you can visit: ${campaign.url}
-
-Gratefully,
-[Your Name]`,
+If you'd like to check on our progress or share the campaign again, you can visit: ${campaign.url}`,
 
             // Template for reaching fundraising milestone
-            milestone: `Subject: We've Reached a Milestone! ${campaign.title} Update
-
-Dear Supporters,
-
-I have exciting news to share about our fundraising campaign, ${campaign.title}!
+            milestone: `I have exciting news to share about our fundraising campaign, ${campaign.title}!
 
 We've just reached an important milestone: [describe milestone - e.g., "50% of our goal", "100 donors", "first project phase funded"].
 
@@ -1572,10 +1723,7 @@ This milestone means we can now:
 
 We still have more to accomplish to reach our full goal. If you could share our campaign with friends and family, it would help us tremendously: ${campaign.url}
 
-Thank you for being part of this journey and making a difference!
-
-With gratitude,
-[Your Name]`
+Thank you for being part of this journey and making a difference!`
         };
         
         // Select the appropriate template based on purpose and campaign type
@@ -1606,19 +1754,7 @@ With gratitude,
             template = templates.sponsorship_followup;
         }
         
-        return `## Draft Email Template
-
-\`\`\`
-${template}
-\`\`\`
-
-### How to Use This Template:
-1. Copy the text above
-2. Replace all placeholder text in [brackets]
-3. Personalize the message with specific details
-4. Use in your preferred email client
-
-Would you like me to create a different type of email template?`;
+        return template;
     }
     
     // Helper method to determine campaign type from title and description
@@ -1666,6 +1802,266 @@ Would you like me to create a different type of email template?`;
         
         // Default to generic campaign type
         return 'general';
+    }
+
+    // New method to load user data from API if user is logged in
+    async loadUserData() {
+        try {
+            // Check if user is authenticated using the API utility
+            if (typeof isAuthenticated === 'function' && isAuthenticated()) {
+                // Load user data using the API
+                const userData = await API.auth.getUser();
+                
+                if (userData) {
+                    console.log('Loaded user data for chatbot personalization');
+                    this.userData = userData;
+                    
+                    // Additionally, load user's campaigns if available
+                    try {
+                        const userCampaigns = await API.users.getCampaigns();
+                        if (userCampaigns && userCampaigns.length > 0) {
+                            this.userData.campaigns = userCampaigns;
+                        }
+                    } catch (campaignError) {
+                        console.warn('Unable to load user campaigns:', campaignError);
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('Unable to load user data for chatbot:', error);
+            // Non-critical error, continue without user data
+            this.userData = null;
+        }
+    }
+    
+    // New method to detect current page context
+    detectCurrentPageContext() {
+        // Get current page URL
+        const currentUrl = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Get specific page parameters for better context
+        const campaignId = urlParams.get('id');
+        const campaignName = document.querySelector('.campaign-title')?.textContent || '';
+        
+        // Determine page context based on URL
+        const pageContexts = {
+            '/index.html': {
+                pageName: 'Home',
+                contextDescription: 'This page displays featured fundraising campaigns and general information about the platform. The user may be looking for campaigns to support or information about starting their own campaign.'
+            },
+            '/': {
+                pageName: 'Home',
+                contextDescription: 'This page displays featured fundraising campaigns and general information about the platform. The user may be looking for campaigns to support or information about starting their own campaign.'
+            },
+            '/campaign.html': {
+                pageName: 'Campaign Details',
+                contextDescription: `This page shows details about a specific fundraising campaign${campaignName ? ` called "${campaignName}"` : ''} with ID ${campaignId || 'unknown'}. The user may want to donate to this campaign or learn more about it.`
+            },
+            '/create.html': {
+                pageName: 'Create Campaign',
+                contextDescription: 'This page contains a form for creating a new fundraising campaign. The user is likely looking for help filling out the campaign details, understanding what makes an effective campaign, or technical help with the form.'
+            },
+            '/edit-campaign.html': {
+                pageName: 'Edit Campaign',
+                contextDescription: `This page allows users to edit an existing campaign${campaignId ? ` with ID ${campaignId}` : ''}. The user might need help updating their campaign details, improving their description, or understanding how edits might affect their campaign.`
+            },
+            '/donate.html': {
+                pageName: 'Donation',
+                contextDescription: `This page contains a donation form${campaignId ? ` for campaign ID ${campaignId}` : ''}${campaignName ? ` called "${campaignName}"` : ''}. The user may need help with payment methods, donation amounts, or understanding how their donation will be used.`
+            },
+            '/dashboard.html': {
+                pageName: 'Dashboard',
+                contextDescription: 'This page shows the user\'s campaigns and donation statistics. The user might need help interpreting their campaign performance, managing their campaigns, or understanding the analytics.'
+            },
+            '/login.html': {
+                pageName: 'Login',
+                contextDescription: 'This page contains a login form. The user might need help accessing their account, recovering a forgotten password, or understanding account security.'
+            },
+            '/register.html': {
+                pageName: 'Registration',
+                contextDescription: 'This page contains a registration form for new accounts. The user might need help creating an account, understanding the required fields, or learning about account features.'
+            }
+        };
+        
+        // Try to extract active form information if present on the page
+        let activeFormContext = this.detectActiveForm();
+        let contextObject = pageContexts[currentUrl] || {
+            pageName: 'Unknown',
+            contextDescription: 'The user is on a page that I don\'t have specific context for. They may need general help with the fundraising platform.'
+        };
+        
+        // Add active form context if available
+        if (activeFormContext) {
+            contextObject.formContext = activeFormContext;
+            contextObject.contextDescription += ` The user is currently filling out a ${activeFormContext.formType} form with fields: ${activeFormContext.activeFields.join(', ')}.`;
+        }
+        
+        return contextObject;
+    }
+    
+    // New method to detect the active form on the page
+    detectActiveForm() {
+        const forms = document.querySelectorAll('form');
+        if (!forms || forms.length === 0) return null;
+        
+        // Try to determine which form is currently active or in view
+        let activeForm = null;
+        let formType = 'unknown';
+        let activeFields = [];
+        
+        // Loop through forms
+        for (const form of forms) {
+            // Check form id or class for hints about form type
+            const formId = form.id || '';
+            const formClass = form.className || '';
+            
+            if (formId.includes('donation') || formClass.includes('donation') || form.querySelector('[name="donation-amount"]')) {
+                formType = 'donation';
+            } else if (formId.includes('campaign') || formClass.includes('campaign-form') || form.querySelector('[name="campaign-title"]')) {
+                formType = 'campaign';
+            } else if (formId.includes('login') || formClass.includes('login') || form.querySelector('[name="password"]')) {
+                formType = 'login';
+            } else if (formId.includes('register') || formClass.includes('register') || form.querySelector('[name="confirm-password"]')) {
+                formType = 'registration';
+            }
+            
+            // Get names of visible form fields
+            const fields = form.querySelectorAll('input, textarea, select');
+            activeFields = Array.from(fields)
+                .filter(field => field.offsetParent !== null) // Only visible fields
+                .map(field => field.name || field.id || field.placeholder || 'unnamed field')
+                .filter(name => name !== 'unnamed field');
+            
+            // If we found fields, consider this the active form
+            if (activeFields.length > 0) {
+                activeForm = form;
+                break;
+            }
+        }
+        
+        if (!activeForm) return null;
+        
+        return {
+            formType,
+            activeFields
+        };
+    }
+    
+    // Add method to refresh context when page changes (for single page applications)
+    refreshPageContext() {
+        this.currentPageContext = this.detectCurrentPageContext();
+        console.log('Updated page context:', this.currentPageContext.pageName);
+    }
+    
+    // New methods for data integration
+    
+    // Fetch real-time statistics from the server
+    async loadChatbotStatistics() {
+        try {
+            const response = await fetch('/api/campaigns/chatbot/statistics');
+            if (!response.ok) {
+                throw new Error('Failed to fetch chatbot statistics');
+            }
+            
+            this.campaignStats = await response.json();
+            console.log('Chatbot statistics loaded:', this.campaignStats);
+            
+            // Also load popular campaigns
+            await this.getPopularCampaigns();
+        } catch (error) {
+            console.error('Error loading chatbot statistics:', error);
+        }
+    }
+    
+    // Get popular campaigns (when no specific interests are provided)
+    async getPopularCampaigns() {
+        try {
+            const response = await fetch('/api/campaigns/chatbot/recommendations');
+            if (!response.ok) {
+                throw new Error('Failed to fetch popular campaigns');
+            }
+            
+            const data = await response.json();
+            this.popularCampaigns = data.campaigns || [];
+            console.log('Popular campaigns loaded:', this.popularCampaigns);
+        } catch (error) {
+            console.error('Error loading popular campaigns:', error);
+        }
+    }
+    
+    // Search for campaigns based on user interests
+    async searchCampaigns(keywords) {
+        try {
+            // Format keywords for URL
+            const keywordsParam = encodeURIComponent(keywords);
+            const response = await fetch(`/api/campaigns/chatbot/recommendations?keywords=${keywordsParam}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch campaign recommendations');
+            }
+            
+            const data = await response.json();
+            return data.campaigns || [];
+        } catch (error) {
+            console.error('Error searching campaigns:', error);
+            return [];
+        }
+    }
+    
+    // Format campaign results for chatbot display
+    formatCampaignResults(campaigns, searchType = 'recommended') {
+        if (!campaigns || campaigns.length === 0) {
+            return "I couldn't find any campaigns matching your interests.";
+        }
+        
+        let resultsMessage = searchType === 'recommended' 
+            ? "Here are some campaigns that match your interests:\n\n" 
+            : "Here are some popular campaigns you might be interested in:\n\n";
+        
+        campaigns.forEach((campaign, index) => {
+            // Calculate percentage funded
+            const percentFunded = campaign.goal_amount > 0 
+                ? Math.round((campaign.raised_amount / campaign.goal_amount) * 100) 
+                : 0;
+            
+            resultsMessage += `**${index + 1}. ${campaign.title}**\n`;
+            resultsMessage += `Created by: ${campaign.creator_name}\n`;
+            resultsMessage += `Raised: $${campaign.raised_amount.toLocaleString()} of $${campaign.goal_amount.toLocaleString()} (${percentFunded}%)\n`;
+            resultsMessage += `Donations: ${campaign.donation_count}\n\n`;
+        });
+        
+        resultsMessage += "You can view more details by clicking on any campaign title on the home page.";
+        
+        return resultsMessage;
+    }
+    
+    // Format statistics for chatbot display
+    formatStatistics() {
+        if (!this.campaignStats) {
+            return "Sorry, I couldn't retrieve the campaign statistics at this time.";
+        }
+        
+        const { donation_stats, campaign_stats, top_categories } = this.campaignStats;
+        
+        let statsMessage = "**Current Fundraising Statistics:**\n\n";
+        
+        // Donation stats
+        statsMessage += `📊 **Total Raised:** $${donation_stats.total_raised.toLocaleString()}\n`;
+        statsMessage += `🎁 **Total Donations:** ${donation_stats.total_donations.toLocaleString()}\n`;
+        statsMessage += `💰 **Average Donation:** $${Math.round(donation_stats.average_donation).toLocaleString()}\n\n`;
+        
+        // Campaign stats
+        statsMessage += `📋 **Active Campaigns:** ${campaign_stats.total_campaigns}\n`;
+        statsMessage += `✅ **Successful Campaigns:** ${campaign_stats.successful_campaigns}\n\n`;
+        
+        // Top categories
+        statsMessage += "**Most Popular Campaign Categories:**\n";
+        top_categories.forEach((category, index) => {
+            statsMessage += `${index + 1}. ${category.name.charAt(0).toUpperCase() + category.name.slice(1)} (${category.count} campaigns)\n`;
+        });
+        
+        return statsMessage;
     }
 }
 

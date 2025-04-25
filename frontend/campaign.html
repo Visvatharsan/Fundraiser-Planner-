@@ -42,7 +42,26 @@
   <script src="/assets/js/ui.js"></script>
   <script src="/assets/js/chatbot-injector.js"></script>
   <script>
-    // ... existing code ...
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavigation();
+      initDarkMode();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      
+      if (!id) {
+        window.location.href = '/';
+        return;
+      }
+      
+      // Load campaign details
+      loadCampaignDetails(id).catch(error => {
+        console.error('Error:', error);
+        
+        // Handle token expiration
+        API.handleTokenError(error);
+      });
+    });
   </script>
 </body>
 </html> 

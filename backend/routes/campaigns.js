@@ -10,6 +10,16 @@ const upload = require('../middleware/upload');
 // @access  Public
 router.get('/', campaignController.getAllCampaigns);
 
+// @route   GET /api/campaigns/chatbot/recommendations
+// @desc    Get campaign recommendations based on keywords/interests
+// @access  Public
+router.get('/chatbot/recommendations', campaignController.getCampaignRecommendations);
+
+// @route   GET /api/campaigns/chatbot/statistics
+// @desc    Get real-time statistics for the chatbot
+// @access  Public
+router.get('/chatbot/statistics', campaignController.getChatbotStatistics);
+
 // @route   GET /api/campaigns/:id
 // @desc    Get a campaign by ID
 // @access  Public

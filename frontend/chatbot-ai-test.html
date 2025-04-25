@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot Test</title>
+    <title>AI Chatbot Test with Data Integration</title>
     <link rel="stylesheet" href="/assets/css/tailwind.css">
     <link rel="stylesheet" href="/assets/css/chatbot.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -70,16 +70,49 @@
             gap: 10px;
             margin-bottom: 20px;
         }
+        .feature-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .feature-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4F46E5;
+        }
     </style>
 </head>
 <body>
     <div class="content">
-        <h1>AI Chatbot Test Page</h1>
-        <p>This is a test page for the AI-powered chatbot. You should receive AI-generated responses rather than pre-written answers when you ask questions.</p>
+        <h1>AI Chatbot Test Page with Data Integration</h1>
+        <p>This chatbot is now connected to the fundraising database for real-time data and campaign recommendations based on user interests.</p>
+        
+        <div class="feature-box">
+            <div class="feature-title">New Features:</div>
+            <ul style="text-align: left; list-style-type: disc; padding-left: 20px;">
+                <li>Real-time fundraising statistics (total raised, number of donations, etc.)</li>
+                <li>Campaign recommendations based on user interests</li>
+                <li>Popular campaign suggestions</li>
+                <li>Category-based information</li>
+            </ul>
+        </div>
         
         <div class="controls">
             <button id="manual-open" class="test-button">Open Chatbot</button>
             <button id="clear-logs" class="test-button">Clear Debug Logs</button>
+        </div>
+        
+        <div class="feature-box">
+            <div class="feature-title">Test with these questions:</div>
+            <ul style="text-align: left; list-style-type: disc; padding-left: 20px;">
+                <li>"What are the current fundraising statistics?"</li>
+                <li>"Recommend campaigns about education"</li>
+                <li>"Show me popular campaigns"</li>
+                <li>"Find medical fundraisers"</li>
+            </ul>
         </div>
         
         <div class="debug-panel">
@@ -125,13 +158,13 @@
     <script src="/assets/js/chatbot.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing AI Chatbot for testing...');
+            console.log('Initializing AI Chatbot with database integration...');
             
             // Initialize chatbot
             window.chatbot = new Chatbot();
             
             // Log when initialized
-            console.log('Chatbot initialized with API key format validation');
+            console.log('Chatbot initialized with database connection and API integration');
             
             // Add manual button to open chatbot
             document.getElementById('manual-open').addEventListener('click', function() {
@@ -140,12 +173,6 @@
                     console.log('Chatbot opened manually');
                 }
             });
-            
-            // Add test message suggestions (optional)
-            console.log('Try asking these questions to test AI responses:');
-            console.log('1. "How do I create a campaign?"');
-            console.log('2. "What payment methods are accepted for donations?"');
-            console.log('3. "Can you help me write a good campaign description?"');
         });
     </script>
 </body>

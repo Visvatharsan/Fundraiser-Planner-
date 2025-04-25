@@ -9,6 +9,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
   <div id="nav-container"></div>
+  <div id="flash-container" class="fixed top-4 right-4 z-50"></div>
   
   <main class="container mx-auto px-4 py-8 flex-grow">
     <header class="mb-8">
@@ -43,7 +44,33 @@
   <script src="/assets/js/ui.js"></script>
   <script src="/assets/js/chatbot-injector.js"></script>
   <script>
-    // ... existing code ...
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavigation();
+      initDarkMode();
+      
+      // Check authentication before loading dashboard
+      if (!isAuthenticated()) {
+        showFlash('Please log in to access your dashboard', 'error');
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 1000);
+        return;
+      }
+      
+      // Load user campaigns
+      loadUserCampaigns().catch(error => {
+        console.error('Error:', error);
+        
+        // If token is expired, redirect to login
+        if (error.message === 'Token expired') {
+          API.removeToken(); // Clear the invalid token
+          showFlash('Your session has expired. Please log in again.', 'error');
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 1500);
+        }
+      });
+    });
   </script>
 </body>
 </html> 

@@ -41,6 +41,10 @@ const API = {
       const data = await response.json();
       
       if (!response.ok) {
+        // Handle token expiration explicitly
+        if (response.status === 401 && data.error === 'Token expired') {
+          throw new Error('Token expired');
+        }
         throw new Error(data.error || 'Something went wrong');
       }
       
@@ -63,6 +67,10 @@ const API = {
       const data = await response.json();
       
       if (!response.ok) {
+        // Handle token expiration explicitly
+        if (response.status === 401 && data.error === 'Token expired') {
+          throw new Error('Token expired');
+        }
         throw new Error(data.error || 'Something went wrong');
       }
       
@@ -85,6 +93,10 @@ const API = {
       const data = await response.json();
       
       if (!response.ok) {
+        // Handle token expiration explicitly
+        if (response.status === 401 && data.error === 'Token expired') {
+          throw new Error('Token expired');
+        }
         throw new Error(data.error || 'Something went wrong');
       }
       
@@ -106,6 +118,10 @@ const API = {
       const data = await response.json();
       
       if (!response.ok) {
+        // Handle token expiration explicitly
+        if (response.status === 401 && data.error === 'Token expired') {
+          throw new Error('Token expired');
+        }
         throw new Error(data.error || 'Something went wrong');
       }
       
@@ -134,6 +150,10 @@ const API = {
       const data = await response.json();
       
       if (!response.ok) {
+        // Handle token expiration explicitly
+        if (response.status === 401 && data.error === 'Token expired') {
+          throw new Error('Token expired');
+        }
         throw new Error(data.error || 'Something went wrong');
       }
       
@@ -142,6 +162,19 @@ const API = {
       console.error('Upload error:', error);
       throw error;
     }
+  },
+  
+  // Check for token expiration and handle appropriately
+  handleTokenError: (error) => {
+    if (error.message === 'Token expired') {
+      API.removeToken();
+      showFlash('Your session has expired. Please log in again.', 'error');
+      setTimeout(() => {
+        window.location.href = '/login.html';
+      }, 1500);
+      return true;
+    }
+    return false;
   },
 
   // Authentication endpoints
@@ -277,8 +310,29 @@ const formatCurrency = (amount) => {
 
 // Format date
 const formatDate = (dateString) => {
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', options);
+  if (!dateString) return 'N/A';
+  
+  let date;
+  
+  // Try to parse the date
+  try {
+    // Handle SQLite timestamp format (YYYY-MM-DD HH:MM:SS)
+    // Handle ISO format (JavaScript's native format)
+    // Handle various other formats
+    date = new Date(dateString);
+    
+    // Check if date is valid after parsing
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date format:', dateString);
+      return 'Recently';
+    }
+    
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Recently';
+  }
 };
 
 // Calculate percentage for progress bars

@@ -616,51 +616,57 @@ const loadCampaignDetails = async (campaignId) => {
         heading.textContent = 'Recent Donations';
         donationsContainer.appendChild(heading);
         
-        // Render donations directly in the container
         if (donations.length === 0) {
-          const emptyMessage = document.createElement('p');
-          emptyMessage.className = 'text-center text-gray-500 my-4';
-          emptyMessage.textContent = 'No donations yet.';
-          donationsContainer.appendChild(emptyMessage);
-        } else {
-          const donationsList = document.createElement('ul');
-          donationsList.className = 'divide-y divide-gray-200';
-          
-          donations.forEach(donation => {
-            const listItem = document.createElement('li');
-            listItem.className = 'py-3';
-            
-            listItem.innerHTML = `
-              <div class="flex justify-between">
-                <div>
-                  <p class="font-medium">${donation.donor_name}</p>
-                  <p class="text-sm text-gray-500">${formatDate(donation.donated_at)}</p>
-                </div>
-                <p class="font-semibold">${formatCurrency(donation.amount)}</p>
-              </div>
-            `;
-            
-            donationsList.appendChild(listItem);
-          });
-          
-          donationsContainer.appendChild(donationsList);
+          const emptyState = document.createElement('div');
+          emptyState.className = 'text-center py-6';
+          emptyState.innerHTML = `
+            <p class="text-gray-500">No donations yet. Be the first to donate!</p>
+            <a href="/donate.html?id=${id}" class="btn bg-indigo-600 text-white px-4 py-2 rounded mt-4 inline-block">Donate Now</a>
+          `;
+          donationsContainer.appendChild(emptyState);
+          return;
         }
+        
+        const donationsList = document.createElement('div');
+        donationsList.className = 'space-y-4 mt-4';
+        
+        donations.forEach(donation => {
+          const donationItem = document.createElement('div');
+          donationItem.className = 'flex items-center justify-between border-b border-gray-200 pb-3';
+          donationItem.innerHTML = `
+            <div>
+              <p class="font-medium">${donation.donor_name || 'Anonymous'}</p>
+              <p class="text-sm text-gray-500">${formatDate(donation.created_at)}</p>
+            </div>
+            <div class="text-indigo-600 font-bold">${formatCurrency(donation.amount)}</div>
+          `;
+          donationsList.appendChild(donationItem);
+        });
+        
+        donationsContainer.appendChild(donationsList);
       }
     } catch (error) {
-      console.error('Error loading donations:', error);
-      const donationsContainer = document.querySelector('#recent-donations');
-      if (donationsContainer) {
-        donationsContainer.innerHTML = `
-          <h3 class="text-xl font-semibold mb-3">Recent Donations</h3>
-          <p class="text-center text-red-500 my-4">Error loading donations. Please try again later.</p>
-        `;
+      // Handle token expiration for donations request
+      if (!API.handleTokenError(error)) {
+        console.error('Error fetching donations:', error);
+        
+        const donationsContainer = document.querySelector('#recent-donations');
+        if (donationsContainer) {
+          donationsContainer.innerHTML = `
+            <h3 class="text-xl font-semibold mb-3">Recent Donations</h3>
+            <p class="text-red-500">Error loading donations. Please try again later.</p>
+          `;
+        }
       }
     }
   } catch (error) {
-    showFlash(error.message || 'Error loading campaign details', 'error');
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 3000);
+    // Handle token expiration for campaign details request
+    if (!API.handleTokenError(error)) {
+      showFlash(error.message || 'Error loading campaign details', 'error');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+    }
   }
 };
 
@@ -670,7 +676,10 @@ const loadUserCampaigns = async () => {
     const campaigns = await API.users.getCampaigns();
     renderUserCampaigns(campaigns, '#user-campaigns');
   } catch (error) {
-    showFlash(error.message || 'Error loading your campaigns', 'error');
+    // Use the token error handler from API
+    if (!API.handleTokenError(error)) {
+      showFlash(error.message || 'Error loading your campaigns', 'error');
+    }
   }
 };
 
@@ -789,6 +798,9 @@ const setupEditCampaignForm = async () => {
   const form = document.querySelector('#edit-campaign-form');
   if (!form) return;
   
+  // Apply dark mode to form elements
+  applyDarkModeToContent(form);
+  
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
   
@@ -818,37 +830,42 @@ const setupEditCampaignForm = async () => {
       }
     }
     
-    // Apply dark mode to form elements
-    applyDarkModeToContent(form);
-    
+    // Set up form submission
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const submitButton = form.querySelector('button[type="submit"]');
       submitButton.disabled = true;
-      submitButton.textContent = 'Updating campaign...';
+      submitButton.textContent = 'Updating...';
       
       try {
         const formData = new FormData(form);
+        formData.append('id', id);
         
         await API.campaigns.update(id, formData);
-        showFlash('Campaign updated successfully! Redirecting...', 'success');
+        showFlash('Campaign updated successfully!', 'success');
         
         setTimeout(() => {
           window.location.href = '/dashboard.html';
         }, 1000);
       } catch (error) {
-        showFlash(error.message || 'Error updating campaign', 'error');
+        // Handle token expiration
+        if (!API.handleTokenError(error)) {
+          showFlash(error.message || 'Error updating campaign', 'error');
+        }
       } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Update Campaign';
       }
     });
   } catch (error) {
-    showFlash(error.message || 'Error loading campaign details', 'error');
-    setTimeout(() => {
-      window.location.href = '/dashboard.html';
-    }, 3000);
+    // Handle token expiration
+    if (!API.handleTokenError(error)) {
+      showFlash(error.message || 'Error loading campaign details', 'error');
+      setTimeout(() => {
+        window.location.href = '/dashboard.html';
+      }, 3000);
+    }
   }
 };
 

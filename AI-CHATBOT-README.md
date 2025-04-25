@@ -10,6 +10,42 @@ The chatbot has been updated to:
 3. Add better error handling and debugging capabilities
 4. Include a new test page with debug console
 
+## AI Chatbot Features
+
+### Natural Language Understanding
+The chatbot uses Google's Gemini AI to understand user queries and provide contextually relevant responses.
+
+### Form Filling Assistance
+The chatbot can help users fill out various forms on the website, including campaign creation, donation forms, and user registration.
+
+### Context Awareness
+The chatbot is aware of which page the user is on and can provide page-specific assistance.
+
+### Campaign Templates
+When users need help with campaign creation, the chatbot can provide templates and suggestions based on the campaign type.
+
+### Email Drafting
+The chatbot can generate email templates for various fundraising purposes:
+- Thank you emails to donors
+- Campaign update emails for supporters
+- Sponsorship requests (corporate and individual)
+- Campaign sharing emails
+- Specialized templates for medical, education, and emergency campaigns
+- Sponsorship follow-up messages
+
+The chatbot can extract campaign information from your messages or use details from the campaign page you're currently viewing.
+
+### Data Integration
+The chatbot now connects directly to the fundraising platform's database, enabling:
+
+1. **Real-time Statistics** - The chatbot can pull current donation statistics, including total amount raised, number of donations, successful campaigns, and popular categories.
+
+2. **Campaign Recommendations** - Users can ask the chatbot to recommend campaigns based on interests (e.g., "Find medical campaigns" or "Show me education fundraisers").
+
+3. **Popular Campaigns** - The chatbot can display trending campaigns ordered by donation activity.
+
+4. **Search Functionality** - Users can search for specific types of campaigns through the chatbot interface.
+
 ## How to Test
 
 ### Step 1: Open the AI Chatbot Test Page
@@ -69,4 +105,31 @@ You can load the API key from environment variables instead:
 You can modify the system prompts in the `getGeminiResponse` method to change how the AI responds.
 
 ## Need Further Help?
-If you continue experiencing issues or have questions, please reach out for support. 
+If you continue experiencing issues or have questions, please reach out for support.
+
+## How to Use the Chatbot
+
+### Getting Platform Statistics
+Ask questions like:
+- "What are the current fundraising statistics?"
+- "How much money has been raised on this platform?"
+- "What are the most popular campaign categories?"
+
+### Finding Campaigns
+Try phrases like:
+- "Recommend campaigns about education"
+- "Find medical fundraisers"
+- "Show me popular campaigns"
+- "Suggest campaigns for community projects"
+
+### Drafting Emails
+For campaign communication, ask the chatbot to help you draft emails:
+- "Draft a thank you email for donors"
+- "Write an email to update supporters on my campaign progress"
+- "Create a sponsorship request email for a company"
+- "Help me write an email to share my medical campaign"
+- "Draft a follow-up email for a potential sponsor"
+
+You can add campaign details to your request:
+- "Draft an email to share my campaign 'School Supplies for Kids' with a goal of $5,000"
+- "Write a thank you email for donors to my medical treatment fundraiser" 
